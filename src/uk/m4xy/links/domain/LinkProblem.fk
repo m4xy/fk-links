@@ -1,0 +1,11 @@
+// Why something asked of the links can't be done.
+type LinkProblem {
+  // Where it was to lead isn't an http or https URL.
+  InvalidUrl(url: String),
+  // The name asked for isn't 3 to 32 letters, digits, - or _, or is one the service keeps.
+  InvalidSlug(slug: String),
+  // Another link has the name asked for.
+  SlugTaken(slug: Slug),
+  // No link has the name.
+  NoSuchLink(slug: String),
+}

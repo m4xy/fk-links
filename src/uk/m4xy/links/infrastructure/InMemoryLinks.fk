@@ -1,0 +1,26 @@
+import uk.m4xy.links.domain.*
+
+// Links kept in a list, for as long as body runs: a handler of the domain's LinkRepository for
+// tests and trying things out, which needs no database.
+module InMemoryLinks {
+  keeping<A>(body: @LinkRepository () -> A): A = {
+    // The newest first, each with the number it was made with.
+    var kept: List<(Int, Link)> = []
+    var made = 0
+    LinkRepository(
+      linkNamed = slug -> kept.find { _, link -> link.slug == slug }.map { _, link -> link },
+      newestFirst = () -> kept.map { _, link -> link },
+      nextNumber = () -> made + 1,
+      add = link -> {
+        made = made + 1
+        kept = [(made, link), *kept]
+      },
+      replace = link -> { kept = kept.map { n, old -> if (old.slug == link.slug) (n, link) else (n, old) } },
+      remove = slug -> {
+        before = kept.size
+        kept = kept.filter { _, link -> link.slug != slug }
+        kept.size < before
+      },
+    ) { body() }
+  }
+}

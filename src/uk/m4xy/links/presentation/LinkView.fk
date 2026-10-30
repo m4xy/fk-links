@@ -1,0 +1,4 @@
+import uk.m4xy.serialization.*
+
+// A link, as the service's JSON shows it.
+@Serializable type LinkView(slug: String, url: String, visits: Int)

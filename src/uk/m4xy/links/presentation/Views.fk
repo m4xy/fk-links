@@ -1,0 +1,12 @@
+import uk.m4xy.links.application.ShortenLink
+import uk.m4xy.links.domain.*
+
+// The domain's values as the service's JSON shows them, and what the JSON asks as the application's
+// requests.
+module Views {
+  link(link: Link): LinkView = LinkView(link.slug.text, link.target.text, link.visits)
+
+  links(links: List<Link>): LinkListView = LinkListView(links.map { link(it) })
+
+  request(asked: ShortenRequest): ShortenLink = ShortenLink(asked.url, asked.slug)
+}

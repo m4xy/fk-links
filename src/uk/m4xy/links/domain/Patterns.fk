@@ -1,0 +1,12 @@
+import uk.m4xy.regex.*
+import uk.m4xy.regex.Regexes.*
+
+// Patterns the domain's rules are written with.
+module Patterns {
+  // A pattern written in the domain, which is one: if it weren't, the domain would be wrong, not
+  // what it's given.
+  compiled(pattern: String): Regex = when (regex(pattern)) {
+    Ok(r) -> r
+    Error(e) -> error("/$pattern/ isn't a pattern: ${e.message}")
+  }
+}

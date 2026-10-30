@@ -1,0 +1,8 @@
+// What happens to a link.
+module Links {
+  // A link just made: followed no times yet.
+  created(slug: Slug, target: TargetUrl): Link = Link(slug, target, 0)
+
+  // The link, followed once more.
+  Link.visited(): Link = this.copy(visits = this.visits + 1)
+}

@@ -1,4 +1,0 @@
-import uk.m4xy.serialization.*
-
-// A link asked for: the URL, and what to call it, or, if it doesn't say, a name made for it.
-@Serializable type NewLink(url: String, slug: Option<String> = None)

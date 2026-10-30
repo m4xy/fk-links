@@ -1,0 +1,50 @@
+import uk.m4xy.fktests.api.Test
+import uk.m4xy.links.application.*
+import uk.m4xy.links.domain.*
+import uk.m4xy.links.infrastructure.InMemoryLinks
+import fckt.effects.Fail
+
+// The use cases, with links kept in memory: what the service does, whatever it's asked through and
+// wherever it keeps them.
+
+@Fail slugOf(made: Result<Link, LinkProblem>): String = when (made) {
+  Ok(link) -> link.slug.text
+  Error(problem) -> fail("no link was made: $problem")
+}
+
+@Test @Fail followingCountsVisits() = InMemoryLinks.keeping {
+  slug = slugOf(LinkService.shorten(ShortenLink("https://example.com/long")))
+  assertEquals("1", slug)
+  assertEquals(Some("https://example.com/long"), LinkService.follow(slug).toOption().map { it.text })
+  LinkService.follow(slug)
+  assertEquals(Some(2), LinkService.details(slug).toOption().map { it.visits })
+}
+
+@Test @Fail aNameIsTakenOnce() = InMemoryLinks.keeping {
+  assertEquals("docs", slugOf(LinkService.shorten(ShortenLink("https://fckt.dev/docs", Some("docs")))))
+  taken = LinkService.shorten(ShortenLink("https://elsewhere.dev", Some("docs")))
+  assertEquals("docs", when (taken) {
+    Error(SlugTaken(slug)) -> slug.text
+    _ -> "not taken: $taken"
+  })
+}
+
+@Test @Fail madeNamesStepAroundAskedOnes() = InMemoryLinks.keeping {
+  // Asked for names have 3 characters at least, so "100" is the first a made name can find taken:
+  // the 3844th link's.
+  slugOf(LinkService.shorten(ShortenLink("https://example.com/asked", Some("100"))))
+  (2..3843).forEach { n -> LinkService.shorten(ShortenLink("https://example.com/$n")) }
+  assertEquals("100-1", slugOf(LinkService.shorten(ShortenLink("https://example.com/3844"))))
+}
+
+@Test @Fail deletedLinksAreGone() = InMemoryLinks.keeping {
+  LinkService.shorten(ShortenLink("https://example.com", Some("gone")))
+  assertEquals(Ok(Unit), LinkService.delete("gone"))
+  assertEquals(Error(NoSuchLink("gone")), LinkService.delete("gone"))
+  assertEquals(Error(NoSuchLink("gone")), LinkService.follow("gone"))
+}
+
+@Test @Fail linksAreListedNewestFirst() = InMemoryLinks.keeping {
+  ["a", "b", "c"].forEach { name -> LinkService.shorten(ShortenLink("https://example.com/$name", Some("${name}${name}${name}"))) }
+  assertEquals(["ccc", "bbb", "aaa"], LinkService.all().map { it.slug.text })
+}

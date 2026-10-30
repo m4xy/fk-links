@@ -27,17 +27,19 @@ Location: https://ocaml.org
 
 ## How it's made
 
-Each part says what it does in its type:
+Four layers, each a package, each using only those before it:
 
-- `Shortening` is pure: what a link may be, and the names made for links. It touches nothing.
-- `LinkStore`'s functions are `@Database`: they run SQL, and nothing else.
-- `Api.routes` is a `List<Route<@Database>>`: routes that use the database, and do nothing else
-  besides answering.
-- `main` opens the database and serves the routes, which is all that touches the network or a file.
+| Package | What's in it |
+|---|---|
+| `uk.m4xy.links.domain` | What links are, and their rules, pure: `Slug` and `TargetUrl`, which only `Slugs` and `TargetUrls` can make, so each is always valid; `Link`; `LinkProblem`, everything that can go wrong; and `LinkRepository`, the effect that says what the domain needs of a store, without saying how. |
+| `uk.m4xy.links.application` | `LinkService`, the use cases: shorten, follow, show, list, delete. Each takes what it's asked as it's asked, checks it by the domain's rules, and is `@LinkRepository`: it keeps links, and does nothing else. |
+| `uk.m4xy.links.infrastructure` | Handlers of `LinkRepository`: `SqliteLinks`, through SQL, which is `@Database`; and `InMemoryLinks`, in a list. |
+| `uk.m4xy.links.presentation` | The service over HTTP: `LinkRoutes`, a table of routes, then a handler for each; the JSON it reads and writes (`ShortenRequest`, `LinkView`, ...), apart from the domain's types; `Problems`, each `LinkProblem` as a status and a message. |
 
-So the tests in `test/service.fk` run the whole service, every route, over HTTP as a client would
-ask, but in memory, with `Server.answering` in place of sockets and `":memory:"` in place of the
-file: changing nothing in the service.
+`main.fk` joins them: it opens the database, keeps the links in it with `SqliteLinks.keeping`, and
+serves `LinkRoutes.routes`. That's all that touches the network or a file.
 
-It needs the OCaml package `sqlite3` (`opam install sqlite3`), and fckt's branch `ranges`, which has
-ranges and, under it, the `printError` fk-cli uses.
+Each layer is tested on its own: `test/domain.fk` the rules, with nothing to handle;
+`test/application.fk` the use cases, with `InMemoryLinks`; and `test/service.fk` the whole service,
+every route, over HTTP as a client would ask, but in memory, with `Server.answering` in place of
+sockets and SQLite's `":memory:"` in place of the file.

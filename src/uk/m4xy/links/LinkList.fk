@@ -1,4 +1,0 @@
-import uk.m4xy.serialization.*
-
-// Every link, newest first.
-@Serializable type LinkList(links: List<Link>)

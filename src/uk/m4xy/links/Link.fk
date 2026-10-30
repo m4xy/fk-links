@@ -1,4 +1,0 @@
-import uk.m4xy.serialization.*
-
-// A short link: what it's called, the URL it leads to, and how many times it's been followed.
-@Serializable type Link(slug: String, url: String, visits: Int)

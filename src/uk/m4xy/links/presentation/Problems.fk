@@ -1,0 +1,16 @@
+import uk.m4xy.http.*
+import uk.m4xy.http.Statuses.*
+import uk.m4xy.http.json.JsonBodies.*
+import uk.m4xy.links.domain.*
+
+// Each of the domain's problems as an HTTP response: its status, and what it says is wrong.
+module Problems {
+  response(problem: LinkProblem): Response = when (problem) {
+    InvalidUrl(url) -> saying(unprocessableContent, "'$url' isn't an http or https URL")
+    InvalidSlug(slug) -> saying(unprocessableContent, "'$slug' can't be a link's name: it must be 3 to 32 letters, digits, - or _, and not one of ${Slugs.reserved.joinToString(", ")}")
+    SlugTaken(slug) -> saying(conflict, "there's already a link called '${slug.text}'")
+    NoSuchLink(slug) -> saying(notFound, "there's no link called '$slug'")
+  }
+
+  private saying(status: Status, error: String): Response = json(status, ProblemViewSerializer, ProblemView(error))
+}

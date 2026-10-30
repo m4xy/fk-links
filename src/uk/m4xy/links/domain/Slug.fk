@@ -1,0 +1,3 @@
+// What a link is called, the path it's followed by: 1 to 40 letters, digits, - or _. Only the
+// domain makes one, through Slugs, so a Slug is always a name a link can have.
+type Slug private(text: String)

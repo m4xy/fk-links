@@ -1,9 +1,0 @@
-// Why a link asked for can't be made.
-type Rejection {
-  // The URL isn't an http or https one.
-  InvalidUrl(url: String),
-  // The name isn't 3 to 32 letters, digits, - or _, or is one the service uses itself.
-  InvalidSlug(slug: String),
-  // Another link has the name.
-  SlugTaken(slug: String),
-}
