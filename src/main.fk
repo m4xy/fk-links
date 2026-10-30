@@ -11,7 +11,13 @@ type Options(port: Int, database: String)
 
 options: Command<Options> = Command("fk-links", "Serves short links, kept in a SQLite database.", Arguments {
   port by optionOr("port", "PORT", "the port to listen on", "8080", short = Some('p')).as(Arguments.int)
-  database by optionOr("database", "FILE", "the SQLite database to keep links in", "links.db", short = Some('d'))
+  database by optionOr(
+    "database",
+    "FILE",
+    "the SQLite database to keep links in",
+    "links.db",
+    short = Some('d'),
+  )
   Options(port, database)
 })
 
@@ -19,6 +25,9 @@ main(args: List<String>) = Cli.run(options, args) { o ->
   Databases.opening(o.database) {
     SqliteStore.prepare()
     println("fk-links: serving links from ${o.database} on port ${o.port}")
-    Server.serve(o.port, Routes.around(LinkRoutes.routes) { respond -> SqliteStore.keeping { respond() } })
+    Server.serve(
+      o.port,
+      Routes.around(LinkRoutes.routes) { respond -> SqliteStore.keeping { respond() } },
+    )
   }
 }

@@ -16,8 +16,14 @@ import fckt.effects.Fail
 }
 
 @Test @Fail onlyHttpUrlsAreTargets() = {
-  assertEquals(Error(InvalidUrl("ftp://example.com/file")), TargetUrls.parsed("ftp://example.com/file"))
-  assertEquals(Some("https://example.com/a?q=1"), TargetUrls.parsed("https://example.com/a?q=1").toOption().map { it.text })
+  assertEquals(
+    Error(InvalidUrl("ftp://example.com/file")),
+    TargetUrls.parsed("ftp://example.com/file"),
+  )
+  assertEquals(
+    Some("https://example.com/a?q=1"),
+    TargetUrls.parsed("https://example.com/a?q=1").toOption().map { it.text },
+  )
 }
 
 @Test @Fail aVisitIsCounted() = when (Slugs.read("a"), TargetUrls.parsed("https://example.com")) {

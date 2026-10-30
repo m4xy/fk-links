@@ -15,12 +15,18 @@ import uk.m4xy.sql.Databases.*
     queryOne(numbers, "SELECT COALESCE(MAX(id), 0) + 1 AS next FROM links").getOrElse(1)
 
   add(link: Link): Unit = {
-    insert("INSERT INTO links (slug, url, visits) VALUES (?, ?, ?)", [Text(link.slug.text), Text(link.target.text), Integer(link.visits)])
+    insert(
+      "INSERT INTO links (slug, url, visits) VALUES (?, ?, ?)",
+      [Text(link.slug.text), Text(link.target.text), Integer(link.visits)],
+    )
     Unit
   }
 
   replace(link: Link): Unit = {
-    execute("UPDATE links SET url = ?, visits = ? WHERE slug = ?", [Text(link.target.text), Integer(link.visits), Text(link.slug.text)])
+    execute(
+      "UPDATE links SET url = ?, visits = ? WHERE slug = ?",
+      [Text(link.target.text), Integer(link.visits), Text(link.slug.text)],
+    )
     Unit
   }
 

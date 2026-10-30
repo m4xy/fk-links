@@ -12,13 +12,19 @@ import fckt.effects.Fail
 @Test @Fail followingCountsVisits() = InMemoryStore.keeping {
   slug = slugOf(ShortenLink.execute(ShortenLink.Request("https://example.com/long")))
   assertEquals("1", slug)
-  assertEquals(Some("https://example.com/long"), FollowLink.execute(slug).toOption().map { it.text })
+  assertEquals(
+    Some("https://example.com/long"),
+    FollowLink.execute(slug).toOption().map { it.text },
+  )
   FollowLink.execute(slug)
   assertEquals(Some(2), ShowLink.execute(slug).toOption().map { it.visits })
 }
 
 @Test @Fail aNameIsTakenOnce() = InMemoryStore.keeping {
-  assertEquals("docs", slugOf(ShortenLink.execute(ShortenLink.Request("https://fckt.dev/docs", Some("docs")))))
+  assertEquals(
+    "docs",
+    slugOf(ShortenLink.execute(ShortenLink.Request("https://fckt.dev/docs", Some("docs")))),
+  )
   taken = ShortenLink.execute(ShortenLink.Request("https://elsewhere.dev", Some("docs")))
   assertEquals("docs", when (taken) {
     Error(SlugTaken(slug)) -> slug.text
@@ -29,7 +35,10 @@ import fckt.effects.Fail
 @Test @Fail madeNamesStepAroundAskedOnes() = InMemoryStore.keeping {
   slugOf(ShortenLink.execute(ShortenLink.Request("https://example.com/asked", Some("100"))))
   (2..3843).forEach { n -> ShortenLink.execute(ShortenLink.Request("https://example.com/$n")) }
-  assertEquals("100-1", slugOf(ShortenLink.execute(ShortenLink.Request("https://example.com/3844"))))
+  assertEquals(
+    "100-1",
+    slugOf(ShortenLink.execute(ShortenLink.Request("https://example.com/3844"))),
+  )
 }
 
 @Test @Fail deletedLinksAreGone() = InMemoryStore.keeping {

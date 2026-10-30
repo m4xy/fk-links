@@ -18,7 +18,10 @@ module Service : FcktConfiguration {
   layout(): FcktLayout = FcktLayout(
     ocamlPackages = ["sqlite3"],
     processors = [
-      Processor("uk.m4xy.serialization.processor.SerializerProcessor", [library("uk.m4xy:fk-serialization-processor:0.1.0")]),
+      Processor(
+        "uk.m4xy.serialization.processor.SerializerProcessor",
+        [library("uk.m4xy:fk-serialization-processor:0.1.0")],
+      ),
     ],
   )
 }

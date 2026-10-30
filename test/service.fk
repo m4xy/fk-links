@@ -42,16 +42,25 @@ base: String = "http://links.test"
   assertEquals(Some("https://example.com/a/long/path?q=1"), followed.header("Location"))
   Client.get("$base/${link.slug}")
 
-  assertEquals(LinkView("1", "https://example.com/a/long/path?q=1", 2), Client.get("$base/links/1").json(LinkViewSerializer))
+  assertEquals(
+    LinkView("1", "https://example.com/a/long/path?q=1", 2),
+    Client.get("$base/links/1").json(LinkViewSerializer),
+  )
 }
 
 @Test @SqlEngine @Network @Fail madeNamesAreBase62() = service {
   (1..63).forEach { n -> shorten("https://example.com/$n") }
-  assertEquals(["11", "10", "Z"], Client.get("$base/links").json(LinkListViewSerializer).links.take(3).map { it.slug })
+  assertEquals(
+    ["11", "10", "Z"],
+    Client.get("$base/links").json(LinkListViewSerializer).links.take(3).map { it.slug },
+  )
 }
 
 @Test @SqlEngine @Network @Fail aLinkCanAskForItsName() = service {
-  assertEquals(LinkView("docs", "https://fckt.dev/docs", 0), shorten("https://fckt.dev/docs", Some("docs")).json(LinkViewSerializer))
+  assertEquals(
+    LinkView("docs", "https://fckt.dev/docs", 0),
+    shorten("https://fckt.dev/docs", Some("docs")).json(LinkViewSerializer),
+  )
   taken = shorten("https://elsewhere.dev", Some("docs"))
   assertEquals(conflict, taken.status)
   assertEquals("there's already a link called 'docs'", problemIn(taken))
@@ -73,7 +82,10 @@ base: String = "http://links.test"
 }
 
 @Test @SqlEngine @Network @Fail notJsonIsABadRequest() = service {
-  assertEquals(badRequest, Client.post("$base/links", "{\"url\": 3}".encodeToBytes(), "application/json").status)
+  assertEquals(
+    badRequest,
+    Client.post("$base/links", "{\"url\": 3}".encodeToBytes(), "application/json").status,
+  )
 }
 
 @Test @SqlEngine @Network @Fail deleting() = service {
@@ -114,5 +126,8 @@ base: String = "http://links.test"
   described = Client.get("$base/openapi.json")
   assertEquals(ok, described.status)
   assertEquals(true, described.text.contains("\"/links/{slug}\":{\"get\":"))
-  assertEquals(true, described.text.contains("\"uk.m4xy.links.presentation.LinkView\":{\"type\":\"object\""))
+  assertEquals(
+    true,
+    described.text.contains("\"uk.m4xy.links.presentation.LinkView\":{\"type\":\"object\""),
+  )
 }

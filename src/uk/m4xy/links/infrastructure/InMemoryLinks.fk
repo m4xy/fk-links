@@ -14,7 +14,9 @@ import uk.m4xy.links.domain.*
 
   replace(link: Link): Unit = {
     links = stored()
-    store(links.copy(newestFirst = links.newestFirst.map { if (it.slug == link.slug) link else it }))
+    store(
+      links.copy(newestFirst = links.newestFirst.map { if (it.slug == link.slug) link else it }),
+    )
   }
 
   remove(slug: Slug): Boolean = {
