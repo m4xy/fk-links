@@ -4,9 +4,6 @@ import uk.m4xy.links.domain.*
 import uk.m4xy.links.infrastructure.InMemoryLinks
 import fckt.effects.Fail
 
-// The use cases, with links kept in memory: what the service does, whatever it's asked through and
-// wherever it keeps them.
-
 @Fail slugOf(made: Result<Link, LinkProblem>): String = when (made) {
   Ok(link) -> link.slug.text
   Error(problem) -> fail("no link was made: $problem")
@@ -30,8 +27,6 @@ import fckt.effects.Fail
 }
 
 @Test @Fail madeNamesStepAroundAskedOnes() = InMemoryLinks.keeping {
-  // Asked for names have 3 characters at least, so "100" is the first a made name can find taken:
-  // the 3844th link's.
   slugOf(LinkService.shorten(ShortenLink("https://example.com/asked", Some("100"))))
   (2..3843).forEach { n -> LinkService.shorten(ShortenLink("https://example.com/$n")) }
   assertEquals("100-1", slugOf(LinkService.shorten(ShortenLink("https://example.com/3844"))))
@@ -48,3 +43,4 @@ import fckt.effects.Fail
   ["a", "b", "c"].forEach { name -> LinkService.shorten(ShortenLink("https://example.com/$name", Some("${name}${name}${name}"))) }
   assertEquals(["ccc", "bbb", "aaa"], LinkService.all().map { it.slug.text })
 }
+

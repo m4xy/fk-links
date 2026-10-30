@@ -1,16 +1,8 @@
-// Where links are kept. The domain says what it needs of a store; infrastructure says how, as
-// SqliteLinks keeps them in a database and InMemoryLinks in a list, each a handler of this effect.
 effect LinkRepository {
-  // The link called slug, if there is one.
   linkNamed(slug: Slug): Option<Link>
-  // Every link, the newest first.
   newestFirst(): List<Link>
-  // A number no link has been made with yet, to make a name from.
   nextNumber(): Int
-  // Keeps a new link.
   add(link: Link): Unit
-  // Keeps the link in place of the one of its name.
   replace(link: Link): Unit
-  // Forgets the link called slug, saying whether there was one.
   remove(slug: Slug): Boolean
 }

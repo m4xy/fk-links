@@ -3,7 +3,6 @@ import uk.m4xy.http.Statuses.*
 import uk.m4xy.http.json.JsonBodies.*
 import uk.m4xy.links.domain.*
 
-// Each of the domain's problems as an HTTP response: its status, and what it says is wrong.
 module Problems {
   response(problem: LinkProblem): Response = when (problem) {
     InvalidUrl(url) -> saying(unprocessableContent, "'$url' isn't an http or https URL")

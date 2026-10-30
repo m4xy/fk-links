@@ -1,0 +1,5 @@
+import uk.m4xy.links.domain.LinkRepository
+
+effect UnitOfWork {
+  atomically<A>(work: @LinkRepository () -> A): A
+}

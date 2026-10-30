@@ -3,8 +3,6 @@ import uk.m4xy.links.domain.*
 import uk.m4xy.links.domain.Links.*
 import fckt.effects.Fail
 
-// The domain's rules, on their own: no store, no HTTP.
-
 @Test @Fail askedNamesAreChecked() = {
   assertEquals(Some("docs"), Slugs.asked("docs").toOption().map { it.text })
   assertEquals(Error(InvalidSlug("ab")), Slugs.asked("ab"))

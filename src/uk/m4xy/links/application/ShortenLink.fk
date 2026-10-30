@@ -1,3 +1,1 @@
-// A link asked for, as whoever asks says it: where it's to lead, and what to call it, or, if it
-// doesn't say, a name made for it.
 type ShortenLink(url: String, slug: Option<String> = None)

@@ -5,24 +5,22 @@ import uk.m4xy.http.Statuses.*
 import uk.m4xy.http.json.JsonBodies.*
 import uk.m4xy.http.client.Client
 import uk.m4xy.http.net.Network
+import uk.m4xy.http.server.Routes
 import uk.m4xy.http.server.Server
 import uk.m4xy.links.infrastructure.SqliteLinks
 import uk.m4xy.links.presentation.*
-import uk.m4xy.links.domain.LinkRepository
+import uk.m4xy.links.domain.*
+import uk.m4xy.links.application.UnitOfWork
+import fckt.effects.Failure.attempt
 import uk.m4xy.sql.*
 import uk.m4xy.serialization.json.Json
 import fckt.effects.Fail
 import fckt.text.Encodings.*
 import uk.m4xy.http.client.Http
 
-// The whole service, asked over HTTP as a client would, its links kept in SQLite, with a new
-// database in memory for each test.
-
 @SqlEngine @Network @Fail service<A>(body: @Http @Database () -> A): A = Databases.opening(":memory:") {
   SqliteLinks.prepare()
-  SqliteLinks.keeping {
-    Server.answering(LinkRoutes.routes) { body() }
-  }
+  Server.answering(Routes.around(LinkRoutes.routes) { respond -> SqliteLinks.keeping { respond() } }) { body() }
 }
 
 base: String = "http://links.test"
@@ -60,8 +58,6 @@ base: String = "http://links.test"
 }
 
 @Test @SqlEngine @Network @Fail aMadeNameStepsAroundOneAskedFor() = service {
-  // A name asked for has 3 characters at least, so only rows from 3844 on can find theirs taken:
-  // here a link called 2 is put straight in the table, as row 1, and the next, row 2, steps around it.
   Databases.insert("INSERT INTO links (slug, url) VALUES ('2', 'https://example.com/asked')")
   assertEquals("2-1", shorten("https://example.com/one").json(LinkViewSerializer).slug)
   assertEquals("3", shorten("https://example.com/two").json(LinkViewSerializer).slug)
@@ -88,5 +84,28 @@ base: String = "http://links.test"
 }
 
 @Test @SqlEngine @Network @Fail health() = service {
+  assertEquals("ok", Client.get("$base/health").text)
+}
+
+@Test @SqlEngine @Fail aFailedTransactionIsRolledBack() = Databases.opening(":memory:") {
+  SqliteLinks.prepare()
+  failed: Result<Unit, String> = attempt {
+    SqliteLinks.keeping {
+      atomically {
+        when (Slugs.read("lost"), TargetUrls.parsed("https://example.com")) {
+          (Some(slug), Ok(target)) -> add(Links.created(slug, target))
+          _ -> Unit
+        }
+        fail("the store fell over")
+      }
+    }
+  }
+  assertEquals(Error("the store fell over"), failed)
+  assertEquals([], SqliteLinks.keeping { newestFirst() })
+}
+
+@Test @SqlEngine @Network @Fail aStoreThatFailsFailsOnlyThatRequest() = service {
+  Databases.script("DROP TABLE links")
+  assertEquals(internalServerError, Client.get("$base/links").status)
   assertEquals("ok", Client.get("$base/health").text)
 }

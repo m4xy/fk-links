@@ -1,2 +1,1 @@
-// A short link: what it's called, where it leads, and how many times it's been followed.
 type Link(slug: Slug, target: TargetUrl, visits: Int)

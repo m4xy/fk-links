@@ -1,20 +1,14 @@
 import uk.m4xy.regex.*
 import uk.m4xy.regex.Regexes.*
 
-// The rules for links' names: those a link may ask for, and those made for links that don't.
 module Slugs {
-  // A name a link asks for: 3 to 32 letters, digits, - or _, and not one the service keeps.
   asked(text: String): Result<Slug, LinkProblem> =
     if (askable.matches(text) && !reserved.contains(text)) Ok(Slug(text)) else Error(InvalidSlug(text))
 
-  // The text as a name a link could have, made or asked for, if it could be one.
   read(text: String): Option<Slug> = if (any.matches(text)) Some(Slug(text)) else None
 
-  // The name made from a number: the number in base 62, or, for a later attempt, when a link asked
-  // for that name itself, with the attempt after it, as 2-1.
   made(number: Int, attempt: Int): Slug = Slug(if (attempt == 0) base62(number) else "${base62(number)}-$attempt")
 
-  // Names the service's own paths have, which no link may ask for.
   reserved: List<String> = ["links", "health"]
 
   private askable: Regex = Patterns.compiled("[A-Za-z0-9_-]{3,32}")

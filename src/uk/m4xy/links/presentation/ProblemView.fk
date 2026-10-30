@@ -1,4 +1,3 @@
 import uk.m4xy.serialization.*
 
-// What's wrong with a request, as the service's JSON says it.
 @Serializable type ProblemView(error: String)

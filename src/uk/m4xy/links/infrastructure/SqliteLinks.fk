@@ -1,19 +1,16 @@
 import fckt.effects.Fail
+import uk.m4xy.links.application.UnitOfWork
 import uk.m4xy.links.domain.*
 import uk.m4xy.sql.*
 import uk.m4xy.sql.Columns.*
 import uk.m4xy.sql.Databases.*
 
-// Links kept in a SQLite database's links table: a handler of the domain's LinkRepository, in
-// terms of SQL.
 module SqliteLinks {
-  // Makes the table, if it isn't there.
   @Database @Fail prepare(): Unit = script(
     "CREATE TABLE IF NOT EXISTS links (id INTEGER PRIMARY KEY, slug TEXT UNIQUE NOT NULL, url TEXT NOT NULL, visits INTEGER NOT NULL DEFAULT 0)"
   )
 
-  // Runs body with its links kept in the database.
-  @Database @Fail keeping<A>(body: @LinkRepository () -> A): A = LinkRepository(
+  @Database @Fail keeping<A>(body: @LinkRepository @UnitOfWork () -> A): A = LinkRepository(
     linkNamed = slug -> queryOne(rows, "SELECT slug, url, visits FROM links WHERE slug = ?", [Text(slug.text)]).map { linkOf(it) },
     newestFirst = () -> queryAs(rows, "SELECT slug, url, visits FROM links ORDER BY id DESC").map { linkOf(it) },
     nextNumber = () -> queryOne(numbers, "SELECT COALESCE(MAX(id), 0) + 1 AS next FROM links").getOrElse(1),
@@ -26,9 +23,10 @@ module SqliteLinks {
       Unit
     },
     remove = slug -> execute("DELETE FROM links WHERE slug = ?", [Text(slug.text)]) > 0,
-  ) { body() }
+  ) {
+    UnitOfWork(atomically = work -> transaction { work() }) { body() }
+  }
 
-  // A row of the links table, as it's kept.
   private type Row(slug: String, url: String, visits: Int)
 
   private rows: Column<Row> = Columns {
@@ -40,7 +38,6 @@ module SqliteLinks {
 
   private numbers: Column<Int> = int("next")
 
-  // The link a row keeps, which the domain made, so one it couldn't have is the database's fault.
   @Fail private linkOf(row: Row): Link = when (Slugs.read(row.slug), TargetUrls.parsed(row.url)) {
     (Some(slug), Ok(target)) -> Link(slug, target, row.visits)
     _ -> fail("the links table has a row the service couldn't have made: ${row.slug} -> ${row.url}")

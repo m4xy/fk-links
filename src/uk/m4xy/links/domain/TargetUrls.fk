@@ -1,9 +1,7 @@
 import uk.m4xy.regex.*
 import uk.m4xy.regex.Regexes.*
 
-// The rule for where links lead.
 module TargetUrls {
-  // The text as where a link may lead, if it's an http or https URL.
   parsed(text: String): Result<TargetUrl, LinkProblem> = if (urls.matches(text)) Ok(TargetUrl(text)) else Error(InvalidUrl(text))
 
   private urls: Regex = Patterns.compiled("https?://[^\\s/?#]+[^\\s]*")

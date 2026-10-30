@@ -1,32 +1,26 @@
 import uk.m4xy.links.domain.*
 import uk.m4xy.links.domain.Links.*
 
-// What can be done with the links: each use case takes what it's asked as it's asked, checks it
-// by the domain's rules, and keeps what changes in the repository. Nothing here knows how links are
-// kept or how they're asked for.
 module LinkService {
-  // Makes the link asked for, called what it asks, or by a name made for it.
-  @LinkRepository shorten(request: ShortenLink): Result<Link, LinkProblem> =
+  @UnitOfWork shorten(request: ShortenLink): Result<Link, LinkProblem> =
     TargetUrls.parsed(request.url).flatMap { target ->
       when (request.slug) {
-        Some(asked) -> Slugs.asked(asked).flatMap { slug -> addedAs(slug, target) }
-        None -> Ok(added(Links.created(freeSlug(nextNumber(), 0), target)))
+        Some(asked) -> Slugs.asked(asked).flatMap { slug -> atomically { addedAs(slug, target) } }
+        None -> Ok(atomically { added(Links.created(freeSlug(nextNumber(), 0), target)) })
       }
     }
 
-  // Where the link called slug leads, counting the visit.
-  @LinkRepository follow(slug: String): Result<TargetUrl, LinkProblem> = named(slug).map { link ->
-    replace(link.visited())
-    link.target
+  @UnitOfWork follow(slug: String): Result<TargetUrl, LinkProblem> = atomically {
+    named(slug).map { link ->
+      replace(link.visited())
+      link.target
+    }
   }
 
-  // The link called slug.
   @LinkRepository details(slug: String): Result<Link, LinkProblem> = named(slug)
 
-  // Every link, the newest first.
   @LinkRepository all(): List<Link> = newestFirst()
 
-  // Deletes the link called slug.
   @LinkRepository delete(slug: String): Result<Unit, LinkProblem> = when (Slugs.read(slug)) {
     Some(name) if remove(name) -> Ok(Unit)
     _ -> Error(NoSuchLink(slug))
@@ -45,7 +39,6 @@ module LinkService {
     link
   }
 
-  // The first name made from the number that no link has, as one may have asked for it.
   @LinkRepository private freeSlug(number: Int, attempt: Int): Slug = {
     slug = Slugs.made(number, attempt)
     if (linkNamed(slug).isSome()) freeSlug(number, attempt + 1) else slug

@@ -32,12 +32,13 @@ Four layers, each a package, each using only those before it:
 | Package | What's in it |
 |---|---|
 | `uk.m4xy.links.domain` | What links are, and their rules, pure: `Slug` and `TargetUrl`, which only `Slugs` and `TargetUrls` can make, so each is always valid; `Link`; `LinkProblem`, everything that can go wrong; and `LinkRepository`, the effect that says what the domain needs of a store, without saying how. |
-| `uk.m4xy.links.application` | `LinkService`, the use cases: shorten, follow, show, list, delete. Each takes what it's asked as it's asked, checks it by the domain's rules, and is `@LinkRepository`: it keeps links, and does nothing else. |
-| `uk.m4xy.links.infrastructure` | Handlers of `LinkRepository`: `SqliteLinks`, through SQL, which is `@Database`; and `InMemoryLinks`, in a list. |
+| `uk.m4xy.links.application` | `LinkService`, the use cases: shorten, follow, show, list, delete. Each checks what it's asked by the domain's rules and keeps links through `@LinkRepository`. `UnitOfWork` makes a read-then-change atomic: `atomically { ... }`. |
+| `uk.m4xy.links.infrastructure` | Handlers of `LinkRepository` and `UnitOfWork`: `SqliteLinks`, with SQL and transactions; and `InMemoryLinks`, in a list. |
 | `uk.m4xy.links.presentation` | The service over HTTP: `LinkRoutes`, a table of fk-http endpoints, each its method, its path, what it reads from a call, typed, and the handler it's given to, then the handlers; the JSON it reads and writes (`ShortenRequest`, `LinkView`, ...), apart from the domain's types; `Problems`, each `LinkProblem` as a status and a message. |
 
-`main.fk` joins them: it opens the database, keeps the links in it with `SqliteLinks.keeping`, and
-serves `LinkRoutes.routes`. That's all that touches the network or a file.
+`main.fk` joins them: it opens the database and serves `LinkRoutes.routes`, each request answered
+inside its own `SqliteLinks.keeping` (`Routes.around`), so a store that fails fails that request
+with a 500, not the server. That's all that touches the network or a file.
 
 Each layer is tested on its own: `test/domain.fk` the rules, with nothing to handle;
 `test/application.fk` the use cases, with `InMemoryLinks`; and `test/service.fk` the whole service,

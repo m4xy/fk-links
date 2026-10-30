@@ -1,10 +1,8 @@
+import uk.m4xy.links.application.UnitOfWork
 import uk.m4xy.links.domain.*
 
-// Links kept in a list, for as long as body runs: a handler of the domain's LinkRepository for
-// tests and trying things out, which needs no database.
 module InMemoryLinks {
-  keeping<A>(body: @LinkRepository () -> A): A = {
-    // The newest first, each with the number it was made with.
+  keeping<A>(body: @LinkRepository @UnitOfWork () -> A): A = {
     var kept: List<(Int, Link)> = []
     var made = 0
     LinkRepository(
@@ -21,6 +19,8 @@ module InMemoryLinks {
         kept = kept.filter { _, link -> link.slug != slug }
         kept.size < before
       },
-    ) { body() }
+    ) {
+      UnitOfWork(atomically = work -> work()) { body() }
+    }
   }
 }
