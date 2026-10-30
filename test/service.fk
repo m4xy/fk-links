@@ -109,3 +109,10 @@ base: String = "http://links.test"
   assertEquals(internalServerError, Client.get("$base/links").status)
   assertEquals("ok", Client.get("$base/health").text)
 }
+
+@Test @SqlEngine @Network @Fail theServiceDescribesItself() = service {
+  described = Client.get("$base/openapi.json")
+  assertEquals(ok, described.status)
+  assertEquals(true, described.text.contains("\"/links/{slug}\":{\"get\":"))
+  assertEquals(true, described.text.contains("\"uk.m4xy.links.presentation.LinkView\":{\"type\":\"object\""))
+}

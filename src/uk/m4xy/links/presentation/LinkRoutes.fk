@@ -5,17 +5,32 @@ import uk.m4xy.http.json.JsonBodies.*
 import uk.m4xy.http.server.*
 import uk.m4xy.http.server.Endpoints.*
 import uk.m4xy.http.server.Inputs.*
+import uk.m4xy.http.server.Routes.*
+import uk.m4xy.http.openapi.OpenApi
 import uk.m4xy.links.application.*
 import uk.m4xy.links.domain.*
 
 module LinkRoutes {
-  routes: List<Route<@LinkRepository @UnitOfWork>> = [
-    get("/health", nothing, health),
-    post("/links", body(ShortenRequestSerializer), shortenLink),
-    get("/links", nothing, listLinks),
-    get("/links/{slug}", slug, showLink),
-    delete("/links/{slug}", slug, deleteLink),
-    get("/{slug}", slug, followLink),
+  routes: List<Route<@LinkRepository @UnitOfWork>> = endpoints + [OpenApi.documenting("/openapi.json", "fk-links", "0.1.0", endpoints)]
+
+  private endpoints: List<Route<@LinkRepository @UnitOfWork>> = [
+    get("/health", nothing, health)
+      .answering(ok),
+    post("/links", body(ShortenRequestSerializer), shortenLink)
+      .answeringJson(created, LinkViewSerializer)
+      .answeringJson(conflict, ProblemViewSerializer)
+      .answeringJson(unprocessableContent, ProblemViewSerializer),
+    get("/links", nothing, listLinks)
+      .answeringJson(ok, LinkListViewSerializer),
+    get("/links/{slug}", slug, showLink)
+      .answeringJson(ok, LinkViewSerializer)
+      .answeringJson(notFound, ProblemViewSerializer),
+    delete("/links/{slug}", slug, deleteLink)
+      .answering(noContent)
+      .answeringJson(notFound, ProblemViewSerializer),
+    get("/{slug}", slug, followLink)
+      .answering(found)
+      .answeringJson(notFound, ProblemViewSerializer),
   ]
 
   private slug: Input<String> = param("slug")

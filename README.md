@@ -24,6 +24,7 @@ Location: https://ocaml.org
 | `DELETE /links/{slug}` | deletes it: 204 |
 | `GET /{slug}` | 302 to where it leads, counting the visit |
 | `GET /health` | 200, if it's up |
+| `GET /openapi.json` | the API as an OpenAPI 3 document, made from the routes themselves |
 
 ## How it's made
 
