@@ -25,8 +25,6 @@ Location: https://ocaml.org
 | `GET /{slug}` | 302 to where it leads, counting the visit |
 | `GET /health` | 200, if it's up |
 
-It needs fk-http's branch `routing`, for its endpoints.
-
 ## How it's made
 
 Four layers, each a package, each using only those before it:
