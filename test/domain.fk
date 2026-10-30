@@ -27,6 +27,9 @@ import fckt.effects.Fail
 }
 
 @Test @Fail aVisitIsCounted() = when (Slugs.read("a"), TargetUrls.parsed("https://example.com")) {
-  (Some(slug), Ok(target)) -> assertEquals(2, Links.created(slug, target).visited().visited().visits)
+  (Some(slug), Ok(target)) -> assertEquals(
+    2,
+    Links.created(slug, target).visited().visited().visits,
+  )
   _ -> fail("a and https://example.com are a name and a target")
 }

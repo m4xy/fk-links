@@ -2,7 +2,11 @@ import uk.m4xy.regex.*
 import uk.m4xy.regex.Regexes.*
 
 module TargetUrls {
-  parsed(text: String): Result<TargetUrl, LinkProblem> = if (urls.matches(text)) Ok(TargetUrl(text)) else Error(InvalidUrl(text))
+  parsed(
+    text: String,
+  ): Result<TargetUrl, LinkProblem> = if (urls.matches(text)) Ok(TargetUrl(text)) else Error(
+    InvalidUrl(text),
+  )
 
   private urls: Regex = Patterns.compiled("https?://[^\\s/?#]+[^\\s]*")
 }

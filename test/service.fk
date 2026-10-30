@@ -18,16 +18,25 @@ import fckt.effects.Fail
 import fckt.text.Encodings.*
 import uk.m4xy.http.client.Http
 
-@SqlEngine @Network @Fail service<A>(body: @Http @Database () -> A): A = Databases.opening(":memory:") {
+@SqlEngine @Network @Fail service<A>(
+  body: @Http @Database () -> A,
+): A = Databases.opening(":memory:") {
   SqliteStore.prepare()
-  Server.answering(Routes.around(LinkRoutes.routes) { respond -> SqliteStore.keeping { respond() } }) { body() }
+  Server.answering(
+    Routes.around(LinkRoutes.routes) { respond -> SqliteStore.keeping { respond() } },
+  ) { body() }
 }
 
 base: String = "http://links.test"
 
-@Http @Fail shorten(url: String, slug: Option<String> = None): Response = postJson("$base/links", ShortenRequestSerializer, ShortenRequest(url, slug))
+@Http @Fail shorten(
+  url: String,
+  slug: Option<String> = None,
+): Response = postJson("$base/links", ShortenRequestSerializer, ShortenRequest(url, slug))
 
-@Http @Fail delete(path: String): Response = Client.send(Request(Delete, Client.parsed("$base$path")))
+@Http @Fail delete(
+  path: String,
+): Response = Client.send(Request(Delete, Client.parsed("$base$path")))
 
 @Fail problemIn(response: Response): String = response.json(ProblemViewSerializer).error
 

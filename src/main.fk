@@ -10,7 +10,9 @@ import fckt.io.Console
 type Options(port: Int, database: String)
 
 options: Command<Options> = Command("fk-links", "Serves short links, kept in a SQLite database.", Arguments {
-  port by optionOr("port", "PORT", "the port to listen on", "8080", short = Some('p')).as(Arguments.int)
+  port by optionOr("port", "PORT", "the port to listen on", "8080", short = Some('p')).as(
+    Arguments.int,
+  )
   database by optionOr(
     "database",
     "FILE",

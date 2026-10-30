@@ -3,11 +3,16 @@ import uk.m4xy.regex.Regexes.*
 
 module Slugs {
   asked(text: String): Result<Slug, LinkProblem> =
-    if (askable.matches(text) && !reserved.contains(text)) Ok(Slug(text)) else Error(InvalidSlug(text))
+    if (askable.matches(text) && !reserved.contains(text)) Ok(Slug(text)) else Error(
+      InvalidSlug(text),
+    )
 
   read(text: String): Option<Slug> = if (any.matches(text)) Some(Slug(text)) else None
 
-  made(number: Int, attempt: Int): Slug = Slug(if (attempt == 0) base62(number) else "${base62(number)}-$attempt")
+  made(
+    number: Int,
+    attempt: Int,
+  ): Slug = Slug(if (attempt == 0) base62(number) else "${base62(number)}-$attempt")
 
   reserved: List<String> = ["links", "health"]
 

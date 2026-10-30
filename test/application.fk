@@ -49,7 +49,11 @@ import fckt.effects.Fail
 }
 
 @Test @Fail linksAreListedNewestFirst() = InMemoryStore.keeping {
-  ["a", "b", "c"].forEach { name -> ShortenLink.execute(ShortenLink.Request("https://example.com/$name", Some("${name}${name}${name}"))) }
+  [
+    "a",
+    "b",
+    "c",
+  ].forEach { name -> ShortenLink.execute(ShortenLink.Request("https://example.com/$name", Some("${name}${name}${name}"))) }
   assertEquals(["ccc", "bbb", "aaa"], ListLinks.execute().map { it.slug.text })
 }
 

@@ -6,7 +6,11 @@ import uk.m4xy.sql.Databases.*
 
 @Database @Fail module SqliteLinks : LinkRepository {
   linkNamed(slug: Slug): Option<Link> =
-    queryOne(rows, "SELECT slug, url, visits FROM links WHERE slug = ?", [Text(slug.text)]).map { linkOf(it) }
+    queryOne(
+      rows,
+      "SELECT slug, url, visits FROM links WHERE slug = ?",
+      [Text(slug.text)],
+    ).map { linkOf(it) }
 
   newestFirst(): List<Link> =
     queryAs(rows, "SELECT slug, url, visits FROM links ORDER BY id DESC").map { linkOf(it) }
