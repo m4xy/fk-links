@@ -1,0 +1,49 @@
+import uk.m4xy.http.*
+import uk.m4xy.http.Messages.*
+import uk.m4xy.http.Statuses.*
+import uk.m4xy.http.json.JsonBodies.*
+import uk.m4xy.http.server.*
+import uk.m4xy.sql.Database
+import fckt.collections.Maps.*
+
+// The service, over HTTP:
+//
+//   POST   /links         {"url": ..., "slug": ...}  makes a link: 201, 409 if the name's taken, 422 if it may not be made
+//   GET    /links                                     every link, newest first
+//   GET    /links/{slug}                              the link, with its visits
+//   DELETE /links/{slug}                              deletes it: 204
+//   GET    /{slug}                                    302 to where it leads, counting the visit
+//   GET    /health                                    200, if the service is up
+module Api {
+  routes: List<Route<@Database>> = [
+    Route(Get, "/health", _ -> text(ok, "ok")),
+    Route(Post, "/links", call -> receiving(call, NewLinkSerializer) { asked ->
+      when (Shortening.checked(asked).flatMap { LinkStore.create(it) }) {
+        Ok(link) -> json(created, LinkSerializer, link)
+        Error(rejection) -> rejected(rejection)
+      }
+    }),
+    Route(Get, "/links", _ -> json(ok, LinkListSerializer, LinkList(LinkStore.all()))),
+    Route(Get, "/links/{slug}", call -> when (LinkStore.find(slug(call))) {
+      Some(link) -> json(ok, LinkSerializer, link)
+      None -> noSuchLink(slug(call))
+    }),
+    Route(Delete, "/links/{slug}", call -> if (LinkStore.remove(slug(call))) Response(noContent) else noSuchLink(slug(call))),
+    Route(Get, "/{slug}", call -> when (LinkStore.visit(slug(call))) {
+      Some(url) -> Response(found, [Header("Location", url)])
+      None -> noSuchLink(slug(call))
+    }),
+  ]
+
+  private slug(call: Call): String = call.params.get("slug").getOrElse("")
+
+  private rejected(rejection: Rejection): Response = when (rejection) {
+    InvalidUrl(url) -> problem(unprocessableContent, "'$url' isn't an http or https URL")
+    InvalidSlug(slug) -> problem(unprocessableContent, "'$slug' can't be a link's name: it must be 3 to 32 letters, digits, - or _, and not one of ${Shortening.reserved.joinToString(", ")}")
+    SlugTaken(slug) -> problem(conflict, "there's already a link called '$slug'")
+  }
+
+  private noSuchLink(slug: String): Response = problem(notFound, "there's no link called '$slug'")
+
+  private problem(status: Status, error: String): Response = json(status, ProblemSerializer, Problem(error))
+}

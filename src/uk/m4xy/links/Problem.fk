@@ -1,0 +1,4 @@
+import uk.m4xy.serialization.*
+
+// What's wrong with a request, as the service answers it.
+@Serializable type Problem(error: String)

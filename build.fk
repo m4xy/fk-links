@@ -1,0 +1,30 @@
+// fk-links: a service that shortens links, over HTTP, kept in SQLite. kiln build makes
+// build/bin/fk-links; fk-links --help says what it takes.
+import uk.m4xy.kiln.fckt.*
+import uk.m4xy.fktests.kiln.*
+
+project = Project(
+  name = "fk-links",
+  group = "uk.m4xy",
+  version = "0.1.0",
+  dependencies = [
+    library("uk.m4xy:fk-http:0.1.0"),
+    library("uk.m4xy:fk-sqlite:0.1.0"),
+    library("uk.m4xy:fk-regex:0.1.0"),
+    library("uk.m4xy:fk-cli:0.1.0"),
+    library("uk.m4xy:fk-serialization:0.1.0"),
+  ],
+)
+
+// Its JSON is written by serializers fk-serialization's processor writes, and its database is
+// SQLite, through the OCaml package sqlite3, as fk-http's TLS is through ssl.
+module Service : FcktConfiguration {
+  layout(): FcktLayout = FcktLayout(
+    ocamlPackages = ["sqlite3"],
+    processors = [
+      Processor("uk.m4xy.serialization.processor.SerializerProcessor", [library("uk.m4xy:fk-serialization-processor:0.1.0")]),
+    ],
+  )
+}
+
+plugins = [Fckt(Service), FkTests(StandardTests, Service)]

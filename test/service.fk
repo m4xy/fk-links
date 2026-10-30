@@ -1,0 +1,93 @@
+import uk.m4xy.fktests.api.Test
+import uk.m4xy.http.*
+import uk.m4xy.http.Messages.*
+import uk.m4xy.http.Statuses.*
+import uk.m4xy.http.json.JsonBodies.*
+import uk.m4xy.http.client.Client
+import uk.m4xy.http.net.Network
+import uk.m4xy.http.server.Server
+import uk.m4xy.links.*
+import uk.m4xy.sql.*
+import uk.m4xy.serialization.json.Json
+import fckt.effects.Fail
+import fckt.text.Encodings.*
+import uk.m4xy.http.client.Http
+
+// The service, asked over HTTP as a client would, with a new database in memory for each test.
+
+@SqlEngine @Network @Fail service<A>(body: @Http @Database () -> A): A = Databases.opening(":memory:") {
+  LinkStore.prepare()
+  Server.answering(Api.routes) { body() }
+}
+
+base: String = "http://links.test"
+
+@Http @Fail shorten(url: String, slug: Option<String> = None): Response = postJson("$base/links", NewLinkSerializer, NewLink(url, slug))
+
+@Http @Fail delete(path: String): Response = Client.send(Request(Delete, Client.parsed("$base$path")))
+
+@Fail problemIn(response: Response): String = response.json(ProblemSerializer).error
+
+@Test @SqlEngine @Network @Fail aLinkIsMadeAndFollowed() = service {
+  made = shorten("https://example.com/a/long/path?q=1")
+  assertEquals(created, made.status)
+  link = made.json(LinkSerializer)
+  assertEquals(Link("1", "https://example.com/a/long/path?q=1", 0), link)
+
+  followed = Client.get("$base/${link.slug}")
+  assertEquals(found, followed.status)
+  assertEquals(Some("https://example.com/a/long/path?q=1"), followed.header("Location"))
+  Client.get("$base/${link.slug}")
+
+  assertEquals(Link("1", "https://example.com/a/long/path?q=1", 2), Client.get("$base/links/1").json(LinkSerializer))
+}
+
+@Test @SqlEngine @Network @Fail madeNamesAreBase62() = service {
+  numbers(1, 63).forEach { n ->
+    shorten("https://example.com/$n")
+    Unit
+  }
+  assertEquals(["11", "10", "Z"], Client.get("$base/links").json(LinkListSerializer).links.take(3).map { it.slug })
+}
+
+@Test @SqlEngine @Network @Fail aLinkCanAskForItsName() = service {
+  assertEquals(Link("docs", "https://fckt.dev/docs", 0), shorten("https://fckt.dev/docs", Some("docs")).json(LinkSerializer))
+  taken = shorten("https://elsewhere.dev", Some("docs"))
+  assertEquals(conflict, taken.status)
+  assertEquals("there's already a link called 'docs'", problemIn(taken))
+}
+
+@Test @SqlEngine @Network @Fail aMadeNameStepsAroundOneAskedFor() = service {
+  // A name asked for has 3 characters at least, so only rows from 3844 on can find theirs taken:
+  // here a link called 2 is put straight in the table, as row 1, and the next, row 2, steps around it.
+  Databases.insert("INSERT INTO links (slug, url) VALUES ('2', 'https://example.com/asked')")
+  assertEquals("2-1", shorten("https://example.com/one").json(LinkSerializer).slug)
+  assertEquals("3", shorten("https://example.com/two").json(LinkSerializer).slug)
+}
+
+@Test @SqlEngine @Network @Fail whatMayNotBeMadeIsRejected() = service {
+  notHttp = shorten("ftp://example.com/file")
+  assertEquals(unprocessableContent, notHttp.status)
+  assertEquals("'ftp://example.com/file' isn't an http or https URL", problemIn(notHttp))
+  assertEquals(unprocessableContent, shorten("https://example.com", Some("no spaces")).status)
+  assertEquals(unprocessableContent, shorten("https://example.com", Some("links")).status)
+  assertEquals(unprocessableContent, shorten("https://example.com", Some("ab")).status)
+}
+
+@Test @SqlEngine @Network @Fail notJsonIsABadRequest() = service {
+  assertEquals(badRequest, Client.post("$base/links", "{\"url\": 3}".encodeToBytes(), "application/json").status)
+}
+
+@Test @SqlEngine @Network @Fail deleting() = service {
+  shorten("https://example.com", Some("gone"))
+  assertEquals(noContent, delete("/links/gone").status)
+  assertEquals(notFound, Client.get("$base/gone").status)
+  assertEquals("there's no link called 'gone'", problemIn(delete("/links/gone")))
+}
+
+@Test @SqlEngine @Network @Fail health() = service {
+  assertEquals("ok", Client.get("$base/health").text)
+}
+
+// The whole numbers from first to last.
+numbers(first: Int, last: Int): List<Int> = if (first > last) [] else [first, *numbers(first + 1, last)]

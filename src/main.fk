@@ -1,0 +1,22 @@
+import uk.m4xy.cli.*
+import uk.m4xy.cli.Arguments.*
+import uk.m4xy.http.server.Server
+import uk.m4xy.links.*
+import uk.m4xy.sql.Databases
+import fckt.io.Console
+
+type Options(port: Int, database: String)
+
+options: Command<Options> = Command("fk-links", "Serves short links, kept in a SQLite database.", Arguments {
+  port by optionOr("port", "PORT", "the port to listen on", "8080", short = Some('p')).as(Arguments.int)
+  database by optionOr("database", "FILE", "the SQLite database to keep links in", "links.db", short = Some('d'))
+  Options(port, database)
+})
+
+main(args: List<String>) = Cli.run(options, args) { o ->
+  Databases.opening(o.database) {
+    LinkStore.prepare()
+    println("fk-links: serving links from ${o.database} on port ${o.port}")
+    Server.serve(o.port, Api.routes)
+  }
+}
