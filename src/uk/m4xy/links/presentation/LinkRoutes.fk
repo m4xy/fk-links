@@ -1,53 +1,53 @@
-import fckt.collections.Maps.*
 import uk.m4xy.http.*
 import uk.m4xy.http.Messages.*
 import uk.m4xy.http.Statuses.*
 import uk.m4xy.http.json.JsonBodies.*
 import uk.m4xy.http.server.*
+import uk.m4xy.http.server.Endpoints.*
+import uk.m4xy.http.server.Inputs.*
 import uk.m4xy.links.application.LinkService
 import uk.m4xy.links.domain.*
 
-// The service over HTTP: which route each request takes, then a handler for each, which reads the
-// request, asks LinkService, and answers with what it says.
+// The service over HTTP: each endpoint, what it reads, and the handler that answers it, which asks
+// LinkService and answers with what it says.
 module LinkRoutes {
   routes: List<Route<@LinkRepository>> = [
-    Route(Get, "/health", health),
-    Route(Post, "/links", shortenLink),
-    Route(Get, "/links", listLinks),
-    Route(Get, "/links/{slug}", showLink),
-    Route(Delete, "/links/{slug}", deleteLink),
-    Route(Get, "/{slug}", followLink),
+    get("/health", nothing, health),
+    post("/links", body(ShortenRequestSerializer), shortenLink),
+    get("/links", nothing, listLinks),
+    get("/links/{slug}", slug, showLink),
+    delete("/links/{slug}", slug, deleteLink),
+    get("/{slug}", slug, followLink),
   ]
 
-  // 200, if the service is up.
-  private health(call: Call): Response = text(ok, "ok")
+  // A link's name, from the path.
+  private slug: Input<String> = param("slug")
 
-  // {"url": ..., "slug": ...}: 201 with the link made; 409 if the name's taken, 422 if it may not be
-  // made.
-  @LinkRepository private shortenLink(call: Call): Response = receiving(call, ShortenRequestSerializer) { asked ->
+  // 200, if the service is up.
+  private health(_: Unit): Response = text(ok, "ok")
+
+  // 201 with the link made; 409 if the name's taken, 422 if it may not be made.
+  @LinkRepository private shortenLink(asked: ShortenRequest): Response =
     answering(LinkService.shorten(Views.request(asked))) { link -> json(created, LinkViewSerializer, Views.link(link)) }
-  }
 
   // Every link, the newest first.
-  @LinkRepository private listLinks(call: Call): Response = json(ok, LinkListViewSerializer, Views.links(LinkService.all()))
+  @LinkRepository private listLinks(_: Unit): Response = json(ok, LinkListViewSerializer, Views.links(LinkService.all()))
 
   // The link, with how many times it's been followed.
-  @LinkRepository private showLink(call: Call): Response =
-    answering(LinkService.details(slugIn(call))) { link -> json(ok, LinkViewSerializer, Views.link(link)) }
+  @LinkRepository private showLink(slug: String): Response =
+    answering(LinkService.details(slug)) { link -> json(ok, LinkViewSerializer, Views.link(link)) }
 
   // 204, the link deleted.
-  @LinkRepository private deleteLink(call: Call): Response =
-    answering(LinkService.delete(slugIn(call))) { _ -> Response(noContent) }
+  @LinkRepository private deleteLink(slug: String): Response =
+    answering(LinkService.delete(slug)) { _ -> Response(noContent) }
 
   // 302 to where the link leads, the visit counted.
-  @LinkRepository private followLink(call: Call): Response =
-    answering(LinkService.follow(slugIn(call))) { target -> Response(found, [Header("Location", target.text)]) }
+  @LinkRepository private followLink(slug: String): Response =
+    answering(LinkService.follow(slug)) { target -> Response(found, [Header("Location", target.text)]) }
 
   // The response made of what was done, or, if it couldn't be, the problem's.
   private answering<A>(result: Result<A, LinkProblem>, success: (A) -> Response): Response = when (result) {
     Ok(value) -> success(value)
     Error(problem) -> Problems.response(problem)
   }
-
-  private slugIn(call: Call): String = call.params.get("slug").getOrElse("")
 }

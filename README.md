@@ -25,6 +25,8 @@ Location: https://ocaml.org
 | `GET /{slug}` | 302 to where it leads, counting the visit |
 | `GET /health` | 200, if it's up |
 
+It needs fk-http's branch `routing`, for its endpoints.
+
 ## How it's made
 
 Four layers, each a package, each using only those before it:
@@ -34,7 +36,7 @@ Four layers, each a package, each using only those before it:
 | `uk.m4xy.links.domain` | What links are, and their rules, pure: `Slug` and `TargetUrl`, which only `Slugs` and `TargetUrls` can make, so each is always valid; `Link`; `LinkProblem`, everything that can go wrong; and `LinkRepository`, the effect that says what the domain needs of a store, without saying how. |
 | `uk.m4xy.links.application` | `LinkService`, the use cases: shorten, follow, show, list, delete. Each takes what it's asked as it's asked, checks it by the domain's rules, and is `@LinkRepository`: it keeps links, and does nothing else. |
 | `uk.m4xy.links.infrastructure` | Handlers of `LinkRepository`: `SqliteLinks`, through SQL, which is `@Database`; and `InMemoryLinks`, in a list. |
-| `uk.m4xy.links.presentation` | The service over HTTP: `LinkRoutes`, a table of routes, then a handler for each; the JSON it reads and writes (`ShortenRequest`, `LinkView`, ...), apart from the domain's types; `Problems`, each `LinkProblem` as a status and a message. |
+| `uk.m4xy.links.presentation` | The service over HTTP: `LinkRoutes`, a table of fk-http endpoints, each its method, its path, what it reads from a call, typed, and the handler it's given to, then the handlers; the JSON it reads and writes (`ShortenRequest`, `LinkView`, ...), apart from the domain's types; `Problems`, each `LinkProblem` as a status and a message. |
 
 `main.fk` joins them: it opens the database, keeps the links in it with `SqliteLinks.keeping`, and
 serves `LinkRoutes.routes`. That's all that touches the network or a file.
