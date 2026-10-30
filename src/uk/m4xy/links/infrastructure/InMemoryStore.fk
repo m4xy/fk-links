@@ -1,0 +1,13 @@
+import uk.m4xy.links.application.UnitOfWork
+import uk.m4xy.links.domain.LinkRepository
+
+module InMemoryStore {
+  keeping<A>(body: @LinkRepository @UnitOfWork () -> A): A = {
+    var memory = StoredLinks([], 0)
+    LinkMemory(stored = () -> memory, store = links -> { memory = links }) {
+      InMemoryLinks {
+        InMemoryTransactions { body() }
+      }
+    }
+  }
+}

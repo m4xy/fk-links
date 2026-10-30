@@ -2,7 +2,7 @@ import uk.m4xy.cli.*
 import uk.m4xy.cli.Arguments.*
 import uk.m4xy.http.server.Routes
 import uk.m4xy.http.server.Server
-import uk.m4xy.links.infrastructure.SqliteLinks
+import uk.m4xy.links.infrastructure.SqliteStore
 import uk.m4xy.links.presentation.LinkRoutes
 import uk.m4xy.sql.Databases
 import fckt.io.Console
@@ -17,8 +17,8 @@ options: Command<Options> = Command("fk-links", "Serves short links, kept in a S
 
 main(args: List<String>) = Cli.run(options, args) { o ->
   Databases.opening(o.database) {
-    SqliteLinks.prepare()
+    SqliteStore.prepare()
     println("fk-links: serving links from ${o.database} on port ${o.port}")
-    Server.serve(o.port, Routes.around(LinkRoutes.routes) { respond -> SqliteLinks.keeping { respond() } })
+    Server.serve(o.port, Routes.around(LinkRoutes.routes) { respond -> SqliteStore.keeping { respond() } })
   }
 }

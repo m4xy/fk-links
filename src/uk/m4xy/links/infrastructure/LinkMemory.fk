@@ -1,0 +1,4 @@
+effect LinkMemory {
+  stored(): StoredLinks
+  store(links: StoredLinks): Unit
+}

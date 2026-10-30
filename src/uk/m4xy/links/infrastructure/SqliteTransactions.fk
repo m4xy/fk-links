@@ -1,0 +1,9 @@
+import fckt.effects.Fail
+import uk.m4xy.links.application.UnitOfWork
+import uk.m4xy.links.domain.LinkRepository
+import uk.m4xy.sql.*
+import uk.m4xy.sql.Databases.*
+
+@Database @Fail @LinkRepository module SqliteTransactions : UnitOfWork {
+  atomically<A>(work: @LinkRepository () -> A): A = transaction { work() }
+}

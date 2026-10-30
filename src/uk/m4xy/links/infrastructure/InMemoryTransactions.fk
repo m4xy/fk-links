@@ -1,0 +1,6 @@
+import uk.m4xy.links.application.UnitOfWork
+import uk.m4xy.links.domain.LinkRepository
+
+@LinkRepository module InMemoryTransactions : UnitOfWork {
+  atomically<A>(work: @LinkRepository () -> A): A = work()
+}

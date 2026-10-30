@@ -1,7 +1,7 @@
 import uk.m4xy.fktests.api.Test
 import uk.m4xy.links.application.*
 import uk.m4xy.links.domain.*
-import uk.m4xy.links.infrastructure.InMemoryLinks
+import uk.m4xy.links.infrastructure.InMemoryStore
 import fckt.effects.Fail
 
 @Fail slugOf(made: Result<Link, LinkProblem>): String = when (made) {
@@ -9,7 +9,7 @@ import fckt.effects.Fail
   Error(problem) -> fail("no link was made: $problem")
 }
 
-@Test @Fail followingCountsVisits() = InMemoryLinks.keeping {
+@Test @Fail followingCountsVisits() = InMemoryStore.keeping {
   slug = slugOf(ShortenLink.execute(ShortenLink.Request("https://example.com/long")))
   assertEquals("1", slug)
   assertEquals(Some("https://example.com/long"), FollowLink.execute(slug).toOption().map { it.text })
@@ -17,7 +17,7 @@ import fckt.effects.Fail
   assertEquals(Some(2), ShowLink.execute(slug).toOption().map { it.visits })
 }
 
-@Test @Fail aNameIsTakenOnce() = InMemoryLinks.keeping {
+@Test @Fail aNameIsTakenOnce() = InMemoryStore.keeping {
   assertEquals("docs", slugOf(ShortenLink.execute(ShortenLink.Request("https://fckt.dev/docs", Some("docs")))))
   taken = ShortenLink.execute(ShortenLink.Request("https://elsewhere.dev", Some("docs")))
   assertEquals("docs", when (taken) {
@@ -26,20 +26,20 @@ import fckt.effects.Fail
   })
 }
 
-@Test @Fail madeNamesStepAroundAskedOnes() = InMemoryLinks.keeping {
+@Test @Fail madeNamesStepAroundAskedOnes() = InMemoryStore.keeping {
   slugOf(ShortenLink.execute(ShortenLink.Request("https://example.com/asked", Some("100"))))
   (2..3843).forEach { n -> ShortenLink.execute(ShortenLink.Request("https://example.com/$n")) }
   assertEquals("100-1", slugOf(ShortenLink.execute(ShortenLink.Request("https://example.com/3844"))))
 }
 
-@Test @Fail deletedLinksAreGone() = InMemoryLinks.keeping {
+@Test @Fail deletedLinksAreGone() = InMemoryStore.keeping {
   ShortenLink.execute(ShortenLink.Request("https://example.com", Some("gone")))
   assertEquals(Ok(Unit), DeleteLink.execute("gone"))
   assertEquals(Error(NoSuchLink("gone")), DeleteLink.execute("gone"))
   assertEquals(Error(NoSuchLink("gone")), FollowLink.execute("gone"))
 }
 
-@Test @Fail linksAreListedNewestFirst() = InMemoryLinks.keeping {
+@Test @Fail linksAreListedNewestFirst() = InMemoryStore.keeping {
   ["a", "b", "c"].forEach { name -> ShortenLink.execute(ShortenLink.Request("https://example.com/$name", Some("${name}${name}${name}"))) }
   assertEquals(["ccc", "bbb", "aaa"], ListLinks.execute().map { it.slug.text })
 }

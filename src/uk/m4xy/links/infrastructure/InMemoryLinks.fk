@@ -1,26 +1,26 @@
-import uk.m4xy.links.application.UnitOfWork
 import uk.m4xy.links.domain.*
 
-module InMemoryLinks {
-  keeping<A>(body: @LinkRepository @UnitOfWork () -> A): A = {
-    var kept: List<(Int, Link)> = []
-    var made = 0
-    LinkRepository(
-      linkNamed = slug -> kept.find { _, link -> link.slug == slug }.map { _, link -> link },
-      newestFirst = () -> kept.map { _, link -> link },
-      nextNumber = () -> made + 1,
-      add = link -> {
-        made = made + 1
-        kept = [(made, link), *kept]
-      },
-      replace = link -> { kept = kept.map { n, old -> if (old.slug == link.slug) (n, link) else (n, old) } },
-      remove = slug -> {
-        before = kept.size
-        kept = kept.filter { _, link -> link.slug != slug }
-        kept.size < before
-      },
-    ) {
-      UnitOfWork(atomically = work -> work()) { body() }
-    }
+@LinkMemory module InMemoryLinks : LinkRepository {
+  linkNamed(slug: Slug): Option<Link> = stored().newestFirst.find { it.slug == slug }
+
+  newestFirst(): List<Link> = stored().newestFirst
+
+  nextNumber(): Int = stored().made + 1
+
+  add(link: Link): Unit = {
+    links = stored()
+    store(StoredLinks([link, *links.newestFirst], links.made + 1))
+  }
+
+  replace(link: Link): Unit = {
+    links = stored()
+    store(links.copy(newestFirst = links.newestFirst.map { if (it.slug == link.slug) link else it }))
+  }
+
+  remove(slug: Slug): Boolean = {
+    links = stored()
+    kept = links.newestFirst.filter { it.slug != slug }
+    store(links.copy(newestFirst = kept))
+    kept.size < links.newestFirst.size
   }
 }

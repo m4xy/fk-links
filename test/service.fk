@@ -7,7 +7,7 @@ import uk.m4xy.http.client.Client
 import uk.m4xy.http.net.Network
 import uk.m4xy.http.server.Routes
 import uk.m4xy.http.server.Server
-import uk.m4xy.links.infrastructure.SqliteLinks
+import uk.m4xy.links.infrastructure.SqliteStore
 import uk.m4xy.links.presentation.*
 import uk.m4xy.links.domain.*
 import uk.m4xy.links.application.UnitOfWork
@@ -19,8 +19,8 @@ import fckt.text.Encodings.*
 import uk.m4xy.http.client.Http
 
 @SqlEngine @Network @Fail service<A>(body: @Http @Database () -> A): A = Databases.opening(":memory:") {
-  SqliteLinks.prepare()
-  Server.answering(Routes.around(LinkRoutes.routes) { respond -> SqliteLinks.keeping { respond() } }) { body() }
+  SqliteStore.prepare()
+  Server.answering(Routes.around(LinkRoutes.routes) { respond -> SqliteStore.keeping { respond() } }) { body() }
 }
 
 base: String = "http://links.test"
@@ -88,9 +88,9 @@ base: String = "http://links.test"
 }
 
 @Test @SqlEngine @Fail aFailedTransactionIsRolledBack() = Databases.opening(":memory:") {
-  SqliteLinks.prepare()
+  SqliteStore.prepare()
   failed: Result<Unit, String> = attempt {
-    SqliteLinks.keeping {
+    SqliteStore.keeping {
       atomically {
         when (Slugs.read("lost"), TargetUrls.parsed("https://example.com")) {
           (Some(slug), Ok(target)) -> add(Links.created(slug, target))
@@ -101,7 +101,7 @@ base: String = "http://links.test"
     }
   }
   assertEquals(Error("the store fell over"), failed)
-  assertEquals([], SqliteLinks.keeping { newestFirst() })
+  assertEquals([], SqliteStore.keeping { newestFirst() })
 }
 
 @Test @SqlEngine @Network @Fail aStoreThatFailsFailsOnlyThatRequest() = service {
