@@ -39,5 +39,5 @@ So the tests in `test/service.fk` run the whole service, every route, over HTTP 
 ask, but in memory, with `Server.answering` in place of sockets and `":memory:"` in place of the
 file: changing nothing in the service.
 
-It needs the OCaml package `sqlite3` (`opam install sqlite3`), and fckt's `printError`, on the branch
-`std-standard-streams`, as fk-cli does.
+It needs the OCaml package `sqlite3` (`opam install sqlite3`), and fckt's branch `ranges`, which has
+ranges and, under it, the `printError` fk-cli uses.

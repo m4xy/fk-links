@@ -43,10 +43,7 @@ base: String = "http://links.test"
 }
 
 @Test @SqlEngine @Network @Fail madeNamesAreBase62() = service {
-  numbers(1, 63).forEach { n ->
-    shorten("https://example.com/$n")
-    Unit
-  }
+  (1..63).forEach { n -> shorten("https://example.com/$n") }
   assertEquals(["11", "10", "Z"], Client.get("$base/links").json(LinkListSerializer).links.take(3).map { it.slug })
 }
 
@@ -88,6 +85,3 @@ base: String = "http://links.test"
 @Test @SqlEngine @Network @Fail health() = service {
   assertEquals("ok", Client.get("$base/health").text)
 }
-
-// The whole numbers from first to last.
-numbers(first: Int, last: Int): List<Int> = if (first > last) [] else [first, *numbers(first + 1, last)]
