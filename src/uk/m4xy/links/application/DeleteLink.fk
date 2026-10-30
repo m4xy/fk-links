@@ -1,0 +1,8 @@
+import uk.m4xy.links.domain.*
+
+module DeleteLink {
+  @LinkRepository execute(slug: String): Result<Unit, LinkProblem> = when (Slugs.read(slug)) {
+    Some(name) if remove(name) -> Ok(Unit)
+    _ -> Error(NoSuchLink(slug))
+  }
+}

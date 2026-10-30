@@ -1,0 +1,5 @@
+import uk.m4xy.links.domain.*
+
+module ShowLink {
+  @LinkRepository execute(slug: String): Result<Link, LinkProblem> = linkCalled(slug)
+}

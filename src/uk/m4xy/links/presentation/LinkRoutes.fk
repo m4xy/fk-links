@@ -5,8 +5,7 @@ import uk.m4xy.http.json.JsonBodies.*
 import uk.m4xy.http.server.*
 import uk.m4xy.http.server.Endpoints.*
 import uk.m4xy.http.server.Inputs.*
-import uk.m4xy.links.application.LinkService
-import uk.m4xy.links.application.UnitOfWork
+import uk.m4xy.links.application.*
 import uk.m4xy.links.domain.*
 
 module LinkRoutes {
@@ -24,18 +23,18 @@ module LinkRoutes {
   private health(_: Unit): Response = text(ok, "ok")
 
   @LinkRepository @UnitOfWork private shortenLink(asked: ShortenRequest): Response =
-    answering(LinkService.shorten(Views.request(asked))) { link -> json(created, LinkViewSerializer, Views.link(link)) }
+    answering(ShortenLink.execute(Views.request(asked))) { link -> json(created, LinkViewSerializer, Views.link(link)) }
 
-  @LinkRepository @UnitOfWork private listLinks(_: Unit): Response = json(ok, LinkListViewSerializer, Views.links(LinkService.all()))
+  @LinkRepository @UnitOfWork private listLinks(_: Unit): Response = json(ok, LinkListViewSerializer, Views.links(ListLinks.execute()))
 
   @LinkRepository @UnitOfWork private showLink(slug: String): Response =
-    answering(LinkService.details(slug)) { link -> json(ok, LinkViewSerializer, Views.link(link)) }
+    answering(ShowLink.execute(slug)) { link -> json(ok, LinkViewSerializer, Views.link(link)) }
 
   @LinkRepository @UnitOfWork private deleteLink(slug: String): Response =
-    answering(LinkService.delete(slug)) { _ -> Response(noContent) }
+    answering(DeleteLink.execute(slug)) { _ -> Response(noContent) }
 
   @LinkRepository @UnitOfWork private followLink(slug: String): Response =
-    answering(LinkService.follow(slug)) { target -> Response(found, [Header("Location", target.text)]) }
+    answering(FollowLink.execute(slug)) { target -> Response(found, [Header("Location", target.text)]) }
 
   private answering<A>(result: Result<A, LinkProblem>, success: (A) -> Response): Response = when (result) {
     Ok(value) -> success(value)

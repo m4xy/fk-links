@@ -1,0 +1,6 @@
+import uk.m4xy.links.domain.*
+
+@LinkRepository linkCalled(slug: String): Result<Link, LinkProblem> = when (Slugs.read(slug).flatMap { linkNamed(it) }) {
+  Some(link) -> Ok(link)
+  None -> Error(NoSuchLink(slug))
+}

@@ -1,0 +1,11 @@
+import uk.m4xy.links.domain.*
+import uk.m4xy.links.domain.Links.*
+
+module FollowLink {
+  @UnitOfWork execute(slug: String): Result<TargetUrl, LinkProblem> = atomically {
+    linkCalled(slug).map { link ->
+      replace(link.visited())
+      link.target
+    }
+  }
+}

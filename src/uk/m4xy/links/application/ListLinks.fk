@@ -1,0 +1,5 @@
+import uk.m4xy.links.domain.*
+
+module ListLinks {
+  @LinkRepository execute(): List<Link> = newestFirst()
+}

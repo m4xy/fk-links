@@ -6,5 +6,5 @@ module Views {
 
   links(links: List<Link>): LinkListView = LinkListView(links.map { link(it) })
 
-  request(asked: ShortenRequest): ShortenLink = ShortenLink(asked.url, asked.slug)
+  request(asked: ShortenRequest): ShortenLink.Request = ShortenLink.Request(asked.url, asked.slug)
 }

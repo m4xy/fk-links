@@ -10,16 +10,16 @@ import fckt.effects.Fail
 }
 
 @Test @Fail followingCountsVisits() = InMemoryLinks.keeping {
-  slug = slugOf(LinkService.shorten(ShortenLink("https://example.com/long")))
+  slug = slugOf(ShortenLink.execute(ShortenLink.Request("https://example.com/long")))
   assertEquals("1", slug)
-  assertEquals(Some("https://example.com/long"), LinkService.follow(slug).toOption().map { it.text })
-  LinkService.follow(slug)
-  assertEquals(Some(2), LinkService.details(slug).toOption().map { it.visits })
+  assertEquals(Some("https://example.com/long"), FollowLink.execute(slug).toOption().map { it.text })
+  FollowLink.execute(slug)
+  assertEquals(Some(2), ShowLink.execute(slug).toOption().map { it.visits })
 }
 
 @Test @Fail aNameIsTakenOnce() = InMemoryLinks.keeping {
-  assertEquals("docs", slugOf(LinkService.shorten(ShortenLink("https://fckt.dev/docs", Some("docs")))))
-  taken = LinkService.shorten(ShortenLink("https://elsewhere.dev", Some("docs")))
+  assertEquals("docs", slugOf(ShortenLink.execute(ShortenLink.Request("https://fckt.dev/docs", Some("docs")))))
+  taken = ShortenLink.execute(ShortenLink.Request("https://elsewhere.dev", Some("docs")))
   assertEquals("docs", when (taken) {
     Error(SlugTaken(slug)) -> slug.text
     _ -> "not taken: $taken"
@@ -27,20 +27,20 @@ import fckt.effects.Fail
 }
 
 @Test @Fail madeNamesStepAroundAskedOnes() = InMemoryLinks.keeping {
-  slugOf(LinkService.shorten(ShortenLink("https://example.com/asked", Some("100"))))
-  (2..3843).forEach { n -> LinkService.shorten(ShortenLink("https://example.com/$n")) }
-  assertEquals("100-1", slugOf(LinkService.shorten(ShortenLink("https://example.com/3844"))))
+  slugOf(ShortenLink.execute(ShortenLink.Request("https://example.com/asked", Some("100"))))
+  (2..3843).forEach { n -> ShortenLink.execute(ShortenLink.Request("https://example.com/$n")) }
+  assertEquals("100-1", slugOf(ShortenLink.execute(ShortenLink.Request("https://example.com/3844"))))
 }
 
 @Test @Fail deletedLinksAreGone() = InMemoryLinks.keeping {
-  LinkService.shorten(ShortenLink("https://example.com", Some("gone")))
-  assertEquals(Ok(Unit), LinkService.delete("gone"))
-  assertEquals(Error(NoSuchLink("gone")), LinkService.delete("gone"))
-  assertEquals(Error(NoSuchLink("gone")), LinkService.follow("gone"))
+  ShortenLink.execute(ShortenLink.Request("https://example.com", Some("gone")))
+  assertEquals(Ok(Unit), DeleteLink.execute("gone"))
+  assertEquals(Error(NoSuchLink("gone")), DeleteLink.execute("gone"))
+  assertEquals(Error(NoSuchLink("gone")), FollowLink.execute("gone"))
 }
 
 @Test @Fail linksAreListedNewestFirst() = InMemoryLinks.keeping {
-  ["a", "b", "c"].forEach { name -> LinkService.shorten(ShortenLink("https://example.com/$name", Some("${name}${name}${name}"))) }
-  assertEquals(["ccc", "bbb", "aaa"], LinkService.all().map { it.slug.text })
+  ["a", "b", "c"].forEach { name -> ShortenLink.execute(ShortenLink.Request("https://example.com/$name", Some("${name}${name}${name}"))) }
+  assertEquals(["ccc", "bbb", "aaa"], ListLinks.execute().map { it.slug.text })
 }
 

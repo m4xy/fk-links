@@ -32,7 +32,7 @@ Four layers, each a package, each using only those before it:
 | Package | What's in it |
 |---|---|
 | `uk.m4xy.links.domain` | What links are, and their rules, pure: `Slug` and `TargetUrl`, which only `Slugs` and `TargetUrls` can make, so each is always valid; `Link`; `LinkProblem`, everything that can go wrong; and `LinkRepository`, the effect that says what the domain needs of a store, without saying how. |
-| `uk.m4xy.links.application` | `LinkService`, the use cases: shorten, follow, show, list, delete. Each checks what it's asked by the domain's rules and keeps links through `@LinkRepository`. `UnitOfWork` makes a read-then-change atomic: `atomically { ... }`. |
+| `uk.m4xy.links.application` | A module for each use case, each with one `execute`: `ShortenLink`, `FollowLink`, `ShowLink`, `ListLinks`, `DeleteLink`. Each checks what it's asked by the domain's rules and keeps links through `@LinkRepository`. `UnitOfWork` makes a read-then-change atomic: `atomically { ... }`. |
 | `uk.m4xy.links.infrastructure` | Handlers of `LinkRepository` and `UnitOfWork`: `SqliteLinks`, with SQL and transactions; and `InMemoryLinks`, in a list. |
 | `uk.m4xy.links.presentation` | The service over HTTP: `LinkRoutes`, a table of fk-http endpoints, each its method, its path, what it reads from a call, typed, and the handler it's given to, then the handlers; the JSON it reads and writes (`ShortenRequest`, `LinkView`, ...), apart from the domain's types; `Problems`, each `LinkProblem` as a status and a message. |
 

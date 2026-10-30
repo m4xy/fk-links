@@ -1,1 +1,26 @@
-type ShortenLink(url: String, slug: Option<String> = None)
+import uk.m4xy.links.domain.*
+
+module ShortenLink {
+  type Request(url: String, slug: Option<String> = None)
+
+  @UnitOfWork execute(request: Request): Result<Link, LinkProblem> =
+    TargetUrls.parsed(request.url).flatMap { target ->
+      when (request.slug) {
+        Some(asked) -> Slugs.asked(asked).flatMap { slug -> atomically { addedAs(slug, target) } }
+        None -> Ok(atomically { added(Links.created(freeSlug(nextNumber(), 0), target)) })
+      }
+    }
+
+  @LinkRepository private addedAs(slug: Slug, target: TargetUrl): Result<Link, LinkProblem> =
+    if (linkNamed(slug).isSome()) Error(SlugTaken(slug)) else Ok(added(Links.created(slug, target)))
+
+  @LinkRepository private added(link: Link): Link = {
+    add(link)
+    link
+  }
+
+  @LinkRepository private freeSlug(number: Int, attempt: Int): Slug = {
+    slug = Slugs.made(number, attempt)
+    if (linkNamed(slug).isSome()) freeSlug(number, attempt + 1) else slug
+  }
+}
