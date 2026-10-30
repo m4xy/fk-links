@@ -11,15 +11,15 @@ module ShortenLink {
       }
     }
 
-  @LinkRepository private addedAs(slug: Slug, target: TargetUrl): Result<Link, LinkProblem> =
+  private addedAs(slug: Slug, target: TargetUrl): Result<Link, LinkProblem> =
     if (linkNamed(slug).isSome()) Error(SlugTaken(slug)) else Ok(added(Links.created(slug, target)))
 
-  @LinkRepository private added(link: Link): Link = {
+  private added(link: Link): Link = {
     add(link)
     link
   }
 
-  @LinkRepository private freeSlug(number: Int, attempt: Int): Slug = {
+  private freeSlug(number: Int, attempt: Int): Slug = {
     slug = Slugs.made(number, attempt)
     if (linkNamed(slug).isSome()) freeSlug(number, attempt + 1) else slug
   }

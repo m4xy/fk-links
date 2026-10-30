@@ -22,18 +22,18 @@ module LinkRoutes {
 
   private health(_: Unit): Response = text(ok, "ok")
 
-  @LinkRepository @UnitOfWork private shortenLink(asked: ShortenRequest): Response =
+  private shortenLink(asked: ShortenRequest): Response =
     answering(ShortenLink.execute(Views.request(asked))) { link -> json(created, LinkViewSerializer, Views.link(link)) }
 
-  @LinkRepository @UnitOfWork private listLinks(_: Unit): Response = json(ok, LinkListViewSerializer, Views.links(ListLinks.execute()))
+  private listLinks(_: Unit): Response = json(ok, LinkListViewSerializer, Views.links(ListLinks.execute()))
 
-  @LinkRepository @UnitOfWork private showLink(slug: String): Response =
+  private showLink(slug: String): Response =
     answering(ShowLink.execute(slug)) { link -> json(ok, LinkViewSerializer, Views.link(link)) }
 
-  @LinkRepository @UnitOfWork private deleteLink(slug: String): Response =
+  private deleteLink(slug: String): Response =
     answering(DeleteLink.execute(slug)) { _ -> Response(noContent) }
 
-  @LinkRepository @UnitOfWork private followLink(slug: String): Response =
+  private followLink(slug: String): Response =
     answering(FollowLink.execute(slug)) { target -> Response(found, [Header("Location", target.text)]) }
 
   private answering<A>(result: Result<A, LinkProblem>, success: (A) -> Response): Response = when (result) {
