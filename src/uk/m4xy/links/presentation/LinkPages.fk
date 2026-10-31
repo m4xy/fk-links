@@ -1,0 +1,40 @@
+import uk.m4xy.html.Markup
+import uk.m4xy.html.Htmls.*
+import uk.m4xy.html.Tags.*
+import uk.m4xy.links.domain.*
+
+// The service's pages, for people: its links, each with where it goes and how often it's been
+// followed. A link's target is whatever was given, so it's written escaped, as all text is.
+module LinkPages {
+  home(links: List<Link>): String = page {
+    html([attribute("lang", "en")]) {
+      head {
+        meta([attribute("charset", "utf-8")])
+        title { text("fk-links") }
+        style { raw(css) }
+      }
+      body {
+        h1 { text("fk-links") }
+        if (links.isEmpty()) p { text("No links yet: POST one to /links.") }
+        else {
+          p { text(if (links.size == 1) "1 link" else "${links.size} links") }
+          table {
+            thead { tr { ["Link", "Goes to", "Followed"].forEach { th { text(it) } } } }
+            tbody { links.forEach { row(it) } }
+          }
+        }
+      }
+    }
+  }
+
+  @Markup private row(link: Link): Unit = tr {
+    td { a("/${link.slug.text}") { code { text(link.slug.text) } } }
+    td { a(link.target.text) { text(link.target.text) } }
+    td { text(if (link.visits == 1) "once" else "${link.visits} times") }
+  }
+
+  private css: String =
+    "body { font: 16px/1.5 system-ui, sans-serif; max-width: 760px; margin: 40px auto; padding: 0 16px; }" +
+      " table { border-collapse: collapse; width: 100%; } th, td { text-align: left; padding: 6px 8px;" +
+      " border-bottom: 1px solid #ddd; } td:nth-child(2) { word-break: break-all; }"
+}
