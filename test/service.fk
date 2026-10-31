@@ -140,3 +140,14 @@ base: String = "http://links.test"
     described.text.contains("\"uk.m4xy.links.presentation.LinkView\":{\"type\":\"object\""),
   )
 }
+
+// The home page lists the links, for people, escaping where they go.
+@Test @SqlEngine @Network @Fail theHomePageListsTheLinks() = service {
+  assertEquals(true, Client.get("$base/").text.contains("No links yet"))
+  assertEquals(created, shorten("https://example.com/?a=1&b=2", Some("exa")).status)
+  home = Client.get("$base/")
+  assertEquals(Some("text/html; charset=utf-8"), home.header("Content-Type"))
+  assertEquals(true, home.text.contains("""<a href="/exa"><code>exa</code></a>"""))
+  assertEquals(true, home.text.contains(">https://example.com/?a=1&amp;b=2</a>"))
+  assertEquals(true, home.text.contains("<td>0 times</td>"))
+}

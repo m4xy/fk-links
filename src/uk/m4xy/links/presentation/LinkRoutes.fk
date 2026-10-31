@@ -9,6 +9,7 @@ import uk.m4xy.http.server.Routes.*
 import uk.m4xy.http.openapi.OpenApi
 import uk.m4xy.links.application.*
 import uk.m4xy.links.domain.*
+import fckt.text.Encodings.*
 
 module LinkRoutes {
   routes: List<Route<@LinkRepository @UnitOfWork>> = endpoints + [
@@ -17,6 +18,8 @@ module LinkRoutes {
 
   private endpoints: List<Route<@LinkRepository @UnitOfWork>> = [
     get("/health", nothing, health)
+      .answering(ok),
+    get("/", nothing, home)
       .answering(ok),
     post("/links", body(ShortenRequestSerializer), shortenLink)
       .answeringJson(created, LinkViewSerializer)
@@ -38,6 +41,12 @@ module LinkRoutes {
   private slug: Input<String> = param("slug")
 
   private health(_: Unit): Response = text(ok, "ok")
+
+  private home(_: Unit): Response = Response(
+    ok,
+    [Header("Content-Type", "text/html; charset=utf-8")],
+    LinkPages.home(ListLinks.execute()).encodeToBytes(),
+  )
 
   private shortenLink(asked: ShortenRequest): Response =
     answering(

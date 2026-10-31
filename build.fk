@@ -11,6 +11,7 @@ project = Project(
     library("uk.m4xy:fk-regex:0.1.0"),
     library("uk.m4xy:fk-cli:0.1.0"),
     library("uk.m4xy:fk-serialization:0.1.0"),
+    library("uk.m4xy:fk-html:0.1.0"),
   ],
 )
 
