@@ -1,0 +1,14 @@
+# What kiln fetched from git, at the commit it fetched: kiln update fetches the newest.
+fckt:symbols:0.1.0 https://github.com/m4xy/fckt main ca3097ae1ddff79deb7208669b9374ca615575d4
+uk.m4xy:fk-cli:0.1.0 https://github.com/m4xy/fk-cli main e82bb36572ca4af8b72a8eb69237470d40f44edd
+uk.m4xy:fk-html:0.1.0 https://github.com/m4xy/fk-html main 0e931da3188f29ce089fbd1ea7be43c14a21a245
+uk.m4xy:fk-http:0.1.0 https://github.com/m4xy/fk-http main a0c7a9e0e12580e627e95610f00f77b1b3ad4fea
+uk.m4xy:fk-log:0.1.0 https://github.com/m4xy/fk-log main 874c9ee742e5fdb6e9f7f71f4eed0c96a2c3c500
+uk.m4xy:fk-regex:0.1.0 https://github.com/m4xy/fk-regex main 59e8bae57a35df3a6c8ac885597fa2badaea2486
+uk.m4xy:fk-serialization-processor:0.1.0 https://github.com/m4xy/fk-serialization main 864f678b57cc38b6b06708e675f9b922938dc3ab
+uk.m4xy:fk-serialization:0.1.0 https://github.com/m4xy/fk-serialization main 864f678b57cc38b6b06708e675f9b922938dc3ab
+uk.m4xy:fk-sqlite:0.1.0 https://github.com/m4xy/fk-sqlite main e12fda9bce96243e00a7e2d5fa3b6d741800b584
+uk.m4xy:fk-tests-kiln:0.1.0 https://github.com/m4xy/fk-tests main 7a145dcc26e4f7909e31ca78ea751fd265715345
+uk.m4xy:fk-tests-runner:0.1.0 https://github.com/m4xy/fk-tests main 7a145dcc26e4f7909e31ca78ea751fd265715345
+uk.m4xy:fk-tests:0.1.0 https://github.com/m4xy/fk-tests main 7a145dcc26e4f7909e31ca78ea751fd265715345
+uk.m4xy:fk-time:0.1.0 https://github.com/m4xy/fk-time main e34638c9ac9d62d3caaba8bbf38bbc04a6939955
