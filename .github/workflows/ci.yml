@@ -23,10 +23,6 @@ jobs:
           path: fckt
       - uses: actions/checkout@v5
         with:
-          repository: m4xy/kastor
-          path: kastor
-      - uses: actions/checkout@v5
-        with:
           repository: m4xy/kiln
           path: kiln
       - uses: actions/checkout@v5
@@ -53,21 +49,31 @@ jobs:
         with:
           repository: m4xy/fk-http
           path: fk-http
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@v5
         with:
-          distribution: temurin
-          java-version: 21
-      - uses: gradle/actions/setup-gradle@v5
+          repository: m4xy/fk-html
+          path: fk-html
+      - uses: actions/checkout@v5
+        with:
+          repository: m4xy/fk-time
+          path: fk-time
+      - uses: actions/checkout@v5
+        with:
+          repository: m4xy/fk-log
+          path: fk-log
       - uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: 5
       - run: opam install -y ssl sqlite3 ocamlfind
       - name: Build fckt
         working-directory: fckt
-        run: ./gradlew :installDist && echo "$PWD/build/install/fckt/bin" >> "$GITHUB_PATH"
+        run: opam exec -- ./bootstrap.sh && echo "$PWD/build/boot/bin" >> "$GITHUB_PATH"
       - name: Bootstrap kiln
         working-directory: kiln
         run: opam exec -- ./bootstrap.sh && echo "$HOME/.kiln/bin" >> "$GITHUB_PATH"
+      - name: Publish fckt.symbols
+        working-directory: fckt/symbols
+        run: opam exec -- kiln publishLocal
       - name: Publish fk-cli
         working-directory: fk-cli
         run: opam exec -- kiln publishLocal
@@ -77,14 +83,20 @@ jobs:
       - name: Publish fk-sqlite
         working-directory: fk-sqlite
         run: opam exec -- kiln publishLocal
-      - name: Publish fckt.symbols
-        working-directory: fckt/symbols
-        run: opam exec -- kiln publishLocal
       - name: Publish fk-serialization
         working-directory: fk-serialization
         run: opam exec -- kiln publishLocal
       - name: Publish fk-http
         working-directory: fk-http
+        run: opam exec -- kiln publishLocal
+      - name: Publish fk-html
+        working-directory: fk-html
+        run: opam exec -- kiln publishLocal
+      - name: Publish fk-time
+        working-directory: fk-time
+        run: opam exec -- kiln publishLocal
+      - name: Publish fk-log
+        working-directory: fk-log
         run: opam exec -- kiln publishLocal
       - name: Build and test
         working-directory: fk-links
