@@ -1,0 +1,26 @@
+import fckt.time.Clock
+import fckt.time.Times.*
+import uk.m4xy.http.MethodText
+import uk.m4xy.http.server.*
+import uk.m4xy.log.Log
+import uk.m4xy.log.Logs.*
+
+// Each request the routes answer, logged once it's answered: how it was asked, what was answered,
+// and how long that took.
+module RequestLogs {
+  logged<@E>(routes: List<Route<@E>>): List<Route<@Log @Clock @E>> =
+    Routes.aroundCalls(routes) { call, respond ->
+      started = now()
+      response = respond()
+      info(
+        "answered",
+        [
+          ("method", MethodText.of(call.request.method)),
+          ("path", call.request.url.path),
+          ("status", "${response.status.code}"),
+          ("took", "${started.until(now()).millis}ms"),
+        ],
+      )
+      response
+    }
+}

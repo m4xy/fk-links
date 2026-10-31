@@ -17,6 +17,12 @@ import uk.m4xy.serialization.json.Json
 import fckt.effects.Fail
 import fckt.text.Encodings.*
 import uk.m4xy.http.client.Http
+import uk.m4xy.http.server.Route
+import uk.m4xy.log.Entry
+import uk.m4xy.log.Level
+import uk.m4xy.log.Logs.collected
+import fckt.time.Clock
+import fckt.time.Instant
 
 @SqlEngine @Network @Fail service<A>(
   body: @Http @Database () -> A,
@@ -150,4 +156,31 @@ base: String = "http://links.test"
   assertEquals(true, home.text.contains("""<a href="/exa"><code>exa</code></a>"""))
   assertEquals(true, home.text.contains(">https://example.com/?a=1&amp;b=2</a>"))
   assertEquals(true, home.text.contains("<td>0 times</td>"))
+}
+
+// Each request is logged once it's answered: how it was asked, what was answered, and how long it
+// took.
+@Test @Fail requestsAreLogged() = {
+  var time = 0
+  (_, entries) = collected {
+    Clock(now = () -> {
+      time = time + 5
+      Instant(time)
+    }) {
+      routes = RequestLogs.logged(
+        [Route(Get, "/links/{slug}", _ -> text(ok, "a link"))],
+      )
+      Routes.respond(routes, Request(Get, Client.parsed("$base/links/abc")))
+    }
+  }
+  assertEquals(
+    [
+      uk.m4xy.log.Entry(
+        uk.m4xy.log.Info,
+        "answered",
+        [("method", "GET"), ("path", "/links/abc"), ("status", "200"), ("took", "5ms")],
+      ),
+    ],
+    entries,
+  )
 }
